@@ -1,0 +1,670 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 16 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 16 100% 50%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 16 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 16 100% 50%;
+  }
+
+  /* Midnight Theme */
+  .midnight {
+    --background: 230 35% 7%;
+    --foreground: 213 31% 91%;
+    --card: 230 25% 10%;
+    --card-foreground: 213 31% 91%;
+    --popover: 230 25% 10%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 230 100% 65%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 230 25% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 230 25% 15%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 230 25% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 230 25% 15%;
+    --input: 230 25% 15%;
+    --ring: 230 100% 65%;
+  }
+
+  /* Sunset Theme */
+  .sunset {
+    --background: 20 20% 97%;
+    --foreground: 20 40% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 40% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 40% 15%;
+    --primary: 20 100% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 20 10% 90%;
+    --secondary-foreground: 20 40% 15%;
+    --muted: 20 10% 90%;
+    --muted-foreground: 20 40% 40%;
+    --accent: 20 10% 90%;
+    --accent-foreground: 20 40% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 20 10% 85%;
+    --input: 20 10% 85%;
+    --ring: 20 100% 60%;
+  }
+
+  /* Forest Theme */
+  .forest {
+    --background: 150 30% 10%;
+    --foreground: 150 10% 90%;
+    --card: 150 30% 12%;
+    --card-foreground: 150 10% 90%;
+    --popover: 150 30% 12%;
+    --popover-foreground: 150 10% 90%;
+    --primary: 150 80% 40%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 150 30% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 150 30% 15%;
+    --muted-foreground: 150 10% 70%;
+    --accent: 150 30% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 150 30% 15%;
+    --input: 150 30% 15%;
+    --ring: 150 80% 40%;
+  }
+
+  /* Ocean Theme */
+  .ocean {
+    --background: 200 70% 10%;
+    --foreground: 200 10% 90%;
+    --card: 200 70% 12%;
+    --card-foreground: 200 10% 90%;
+    --popover: 200 70% 12%;
+    --popover-foreground: 200 10% 90%;
+    --primary: 200 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 200 70% 15%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 200 70% 15%;
+    --muted-foreground: 200 10% 70%;
+    --accent: 200 70% 15%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 200 70% 15%;
+    --input: 200 70% 15%;
+    --ring: 200 100% 50%;
+  }
+
+  /* Lavender Theme */
+  .lavender {
+    --background: 270 20% 98%;
+    --foreground: 270 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 270 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 270 30% 15%;
+    --primary: 270 100% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 270 20% 90%;
+    --secondary-foreground: 270 30% 15%;
+    --muted: 270 20% 90%;
+    --muted-foreground: 270 30% 40%;
+    --accent: 270 20% 90%;
+    --accent-foreground: 270 30% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 270 20% 85%;
+    --input: 270 20% 85%;
+    --ring: 270 100% 60%;
+  }
+
+  /* Desert Theme */
+  .desert {
+    --background: 35 40% 95%;
+    --foreground: 35 40% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 35 40% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 35 40% 15%;
+    --primary: 35 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 35 40% 90%;
+    --secondary-foreground: 35 40% 15%;
+    --muted: 35 40% 90%;
+    --muted-foreground: 35 40% 40%;
+    --accent: 35 40% 90%;
+    --accent-foreground: 35 40% 15%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 35 40% 85%;
+    --input: 35 40% 85%;
+    --ring: 35 100% 50%;
+  }
+
+  /* Protanopia Theme (Red-Green Color Blindness) */
+  .protanopia {
+    --background: 220 20% 97%;
+    --foreground: 220 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 30% 15%;
+    --primary: 220 100% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 20% 90%;
+    --secondary-foreground: 220 30% 15%;
+    --muted: 220 20% 90%;
+    --muted-foreground: 220 30% 40%;
+    --accent: 220 20% 90%;
+    --accent-foreground: 220 30% 15%;
+    --destructive: 220 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 85%;
+    --input: 220 20% 85%;
+    --ring: 220 100% 50%;
+  }
+
+  /* Deuteranopia Theme (Green-Red Color Blindness) */
+  .deuteranopia {
+    --background: 240 20% 97%;
+    --foreground: 240 30% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 30% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 30% 15%;
+    --primary: 240 100% 60%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 20% 90%;
+    --secondary-foreground: 240 30% 15%;
+    --muted: 240 20% 90%;
+    --muted-foreground: 240 30% 40%;
+    --accent: 240 20% 90%;
+    --accent-foreground: 240 30% 15%;
+    --destructive: 240 60% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 20% 85%;
+    --input: 240 20% 85%;
+    --ring: 240 100% 60%;
+  }
+
+  /* Tritanopia Theme (Blue-Yellow Color Blindness) */
+  .tritanopia {
+    --background: 0 0% 97%;
+    --foreground: 0 0% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
+    --primary: 0 0% 50%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 0 0% 90%;
+    --secondary-foreground: 0 0% 15%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+    --accent: 0 0% 90%;
+    --accent-foreground: 0 0% 15%;
+    --destructive: 0 0% 40%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
+    --ring: 0 0% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Optimize for tall displays */
+@media screen and (min-aspect-ratio: 20 / 9) {
+  .content-wrapper {
+    max-width: 95%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .post-feed-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  .sidebar-container {
+    display: flex;
+    max-width: 1800px;
+    margin: 0 auto;
+  }
+
+  .sidebar-content {
+    width: 300px;
+    position: sticky;
+    top: 4rem;
+    height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+
+  .main-content {
+    flex: 1;
+    max-width: calc(100% - 300px);
+  }
+}
+
+/* Media optimizations for 20:9 displays */
+@media screen and (min-aspect-ratio: 20 / 9) {
+  .content-max-width {
+    max-width: 1800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* CSS Art and Decorations */
+.reddit-logo {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.reddit-logo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: hsl(var(--primary));
+  border-radius: 50%;
+}
+
+.reddit-logo::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  background: hsl(var(--background));
+  border-radius: 50%;
+  box-shadow: 12px -5px 0 -3px hsl(var(--background)), -12px -5px 0 -3px hsl(var(--background));
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* Media optimizations for 20:9 displays */
+
+/* Upvote/Downvote animations */
+@keyframes upvote {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.upvote-animation {
+  animation: upvote 0.3s ease-out;
+}
+
+@keyframes downvote {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.downvote-animation {
+  animation: downvote 0.3s ease-out;
+}
+
+/* Media player controls */
+.media-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, transparent 100%);
+  padding: 0.5rem;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.media-container:hover .media-controls,
+.media-container:focus-within .media-controls,
+.media-controls:focus-within {
+  opacity: 1;
+}
+
+.media-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+/* Responsive layout for different screen sizes */
+@media (max-width: 640px) {
+  .post-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .post-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .post-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+}
+
+/* Ultra-wide screen optimizations */
+@media screen and (min-width: 2000px) {
+  .content-max-width {
+    max-width: 1800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+/* Redgif embed container */
+.redgif-embed-container {
+  position: relative;
+  width: 100%;
+  /* Use 9:16 aspect ratio by default, which is common for mobile-oriented content */
+  padding-bottom: 177.78%;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.redgif-embed-container iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* Handle landscape redgifs differently if needed */
+@media (min-width: 768px) {
+  .redgif-embed-container.landscape {
+    padding-bottom: 56.25%; /* 16:9 for landscape content */
+  }
+}
+
+.redgif-attribution {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.redgif-attribution a {
+  text-decoration: none;
+}
+
+.redgif-attribution a:hover {
+  text-decoration: underline;
+}
+
+/* Reddit media specific styles */
+.reddit-media {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.vreddit-video {
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.iredd-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+/* Add responsive styles for media content */
+.media-responsive {
+  width: 100%;
+  max-width: 100vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+/* Enhanced responsive media handling for smaller screens */
+@media (max-width: 600px) {
+  .media-responsive {
+    max-width: calc(100vw - 24px);
+    max-height: 70vh;
+  }
+  
+  /* Ensure images don't overflow on small screens */
+  img, video, iframe:not(.redgif-embed-container iframe) {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Adjust padding on cards for small screens */
+  .post-feed-container .rounded-lg {
+    padding: 0.75rem !important;
+  }
+  
+  /* Better handling of long text elements */
+  .truncate-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* Fix for embedded content, but exclude RedGifs */
+  iframe:not(.redgif-embed-container iframe) {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Specific exception for RedGif containers to maintain aspect ratio */
+  .redgif-embed-container {
+    width: 100%;
+    /* Keep the original aspect ratio */
+  }
+  
+  .redgif-embed-container iframe {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border: 0 !important;
+  }
+}
+
+/* Optimize grid layout for different screen sizes */
+@media (max-width: 640px) {
+  .post-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .post-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .post-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  }
+}
+
+/* Ultra-wide screen optimizations */
+@media screen and (min-width: 2000px) {
+  .content-max-width {
+    max-width: 1800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@layer utilities {
+  .overflow-wrap-anywhere {
+    overflow-wrap: anywhere;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Specific styles for text-only posts */
+  .text-post {
+    width: 100%;
+  }
+  
+  .text-post h2 {
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  
+  .text-post .prose {
+    max-width: 100% !important;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  /* Ensure all images are responsive */
+  img, video {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
