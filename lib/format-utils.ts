@@ -4,6 +4,9 @@ import { formatDistanceToNow } from "date-fns";
  * Format a score number to a more readable format (e.g. 1.2k, 3.4M)
  */
 export function formatScore(score: number): string {
+  if (score === undefined || score === null) {
+    return "0";
+  }
   if (score >= 1000000) {
     return `${(score / 1000000).toFixed(1)}M`;
   }
