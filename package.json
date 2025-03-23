@@ -91,5 +91,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "A modern, mobile-optimized Reddit client built with Next.js, featuring a beautiful UI and enhanced user experience."
+  "description": "A modern, mobile-optimized Reddit client built with Next.js, featuring a beautiful UI and enhanced user experience.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarkGooner/crappy-reddit-skin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DarkGooner/crappy-reddit-skin/issues"
+  },
+  "homepage": "https://github.com/DarkGooner/crappy-reddit-skin#readme"
 }

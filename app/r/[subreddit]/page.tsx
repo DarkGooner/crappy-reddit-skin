@@ -143,6 +143,11 @@ export default function SubredditPage() {
     }
   }, [subreddit, currentSort, timeFilter, session, showNSFW])
 
+  const handleSortChange = (sort: string, time?: string) => {
+    setCurrentSort(sort)
+    if (time) setTimeFilter(time)
+  }
+
   const handleSubscribe = async () => {
     if (!session) {
       toast({
@@ -150,6 +155,7 @@ export default function SubredditPage() {
         description: "Please sign in to subscribe to subreddits",
         variant: "destructive",
       })
+      router.push("/auth/signin")
       return
     }
 
@@ -158,20 +164,18 @@ export default function SubredditPage() {
       setIsSubscribed(!isSubscribed)
       toast({
         title: isSubscribed ? "Unsubscribed" : "Subscribed",
-        description: isSubscribed ? `Unsubscribed from r/${subreddit}` : `Subscribed to r/${subreddit}`,
+        description: isSubscribed
+          ? `You've unsubscribed from r/${subreddit}`
+          : `You've subscribed to r/${subreddit}`,
       })
     } catch (error) {
+      console.error("Error subscribing to subreddit:", error)
       toast({
         title: "Error",
-        description: "Failed to update subscription",
+        description: `Failed to ${isSubscribed ? "unsubscribe from" : "subscribe to"} r/${subreddit}`,
         variant: "destructive",
       })
     }
-  }
-
-  const handleSortChange = (sort: string, time?: string) => {
-    setCurrentSort(sort)
-    if (time) setTimeFilter(time)
   }
 
   if (loading && posts.length === 0) {
@@ -274,16 +278,41 @@ export default function SubredditPage() {
         <ScrollArea className="flex-1 h-full">
           <div className="container mx-auto px-0 pb-16 w-full max-w-2xl">
             <div className="space-y-3 sm:space-y-4">
-              {loading && posts.length > 0 && (
-                <div className="flex justify-center p-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              {/* Initial loading indicator */}
+              {loading && posts.length === 0 && (
+                <div className="flex justify-center p-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               )}
+              
+              {/* Error display */}
+              {error && posts.length === 0 && (
+                <div className="text-center p-4 text-destructive">
+                  <p>{error}</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-2" 
+                    onClick={() => {
+                      setError(null);
+                      setLoading(true);
+                      // Retry loading
+                      fetchingRef.current = false;
+                      abortControllerRef.current?.abort();
+                      abortControllerRef.current = null;
+                    }}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              )}
+              
+              {/* Post feed with infinite scrolling */}
               <PostFeed
                 posts={{
                   posts: posts,
-                  after:
-                    posts.length > 0 && posts[posts.length - 1]?.name ? String(posts[posts.length - 1].name) : null,
+                  after: posts.length > 0 && posts[posts.length - 1]?.name 
+                    ? String(posts[posts.length - 1].name) 
+                    : null,
                   before: null,
                 }}
                 loading={loading && posts.length === 0}

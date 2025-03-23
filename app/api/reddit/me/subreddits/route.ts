@@ -5,6 +5,9 @@ import type { Subreddit } from "@/types/reddit"
 //import { withFileCache } from "@/lib/api-cache" //mine
 import { redditCache } from "@/lib/reddit-cache"
 
+// Force dynamic rendering to ensure fresh data for each user
+export const dynamic = 'force-dynamic'
+
 interface SubredditResponse {
   kind: string;
   data: {
@@ -41,9 +44,8 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
-    // Use caching for user's subreddits
-    const cacheKey = `user-subreddits-${session.user.name}`
-    const apiUrl = "https://oauth.reddit.com/subreddits/mine/subscriber?limit=100"
+    // Add timestamp to ensure fresh data for each request
+    const apiUrl = `https://oauth.reddit.com/subreddits/mine/subscriber?limit=100&_t=${Date.now()}`
     const headers = {
       Authorization: `Bearer ${session.accessToken}`,
       "User-Agent": "RedditMobileWebUI/1.0.0",
@@ -61,7 +63,7 @@ export async function GET() {
         title: subreddit.title,
         description: subreddit.description,
         subscribers: subreddit.subscribers,
-        created: subreddit.created_utc,
+        created_utc: subreddit.created_utc,
         over18: subreddit.over18,
         icon_img: subreddit.icon_img || subreddit.community_icon,
         banner_img: subreddit.banner_img,
@@ -70,6 +72,7 @@ export async function GET() {
         user_is_subscriber: true,
         user_is_moderator: subreddit.user_is_moderator,
         user_is_banned: subreddit.user_is_banned,
+        url: `/r/${subreddit.display_name}`,
       }
     })
 

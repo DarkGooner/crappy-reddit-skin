@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { debounce } from 'lodash';
 
 interface UseInfiniteScrollOptions<T> {
   items: T[];
@@ -100,7 +101,15 @@ export function useInfiniteScroll<T extends { id: string }>({
 
   // Load more items
   const loadMore = useCallback(async () => {
-    if (!afterValue || loading || loadingRef.current || !enabled) {
+    if (loading || loadingRef.current || !enabled) {
+      console.log("Skipping loadMore: already loading or disabled");
+      return;
+    }
+
+    // Allow loading without afterValue on first fetch, but require it for subsequent fetches
+    if (items.length > 0 && !afterValue) {
+      console.log("No after value available for pagination, but already have items");
+      setHasMore(false);
       return;
     }
 
@@ -117,23 +126,27 @@ export function useInfiniteScroll<T extends { id: string }>({
       // Create new abort controller for this request
       abortControllerRef.current = new AbortController();
       
+      console.log(`[InfiniteScroll] Loading more items with after value: ${afterValue || 'initial load'}`);
       const result = await fetchItems(afterValue);
+      
+      // Debug the result
+      console.log(`[InfiniteScroll] Received ${result.items.length} items, after: ${result.after || 'none'}`);
       
       // Filter out duplicates
       const existingIds = new Set(items.map(item => item.id));
       const newItems = result.items.filter(item => !existingIds.has(item.id));
       
+      console.log(`[InfiniteScroll] After filtering duplicates, ${newItems.length} new items remain`);
+      
       if (newItems.length > 0) {
         setItems(prev => [...prev, ...newItems]);
         setAfterValue(result.after);
-        // If there's an after value, we should still have more content
         setHasMore(!!result.after);
         retryCountRef.current = 0;
       } else if (result.after && result.after !== afterValue) {
-        // No new items but have new after value, try next page
+        // No new items but have a different after value, try the next page
+        console.log(`[InfiniteScroll] No new items but different after value, trying next page. Old: ${afterValue}, New: ${result.after}`);
         setAfterValue(result.after);
-        
-        // We still have an after value, so there might be more content
         setHasMore(true);
         
         // Small delay before trying the next page
@@ -143,14 +156,20 @@ export function useInfiniteScroll<T extends { id: string }>({
           loadMore();
         }, 500);
         return;
+      } else if (result.after) {
+        // We have an after value but no new items - still might have more content
+        console.log(`[InfiniteScroll] No new items but still have after value: ${result.after}`);
+        setAfterValue(result.after);
+        setHasMore(true);
       } else {
-        // No new items and no new after value - we've reached the end
+        // No more content
+        console.log('[InfiniteScroll] No more content - end reached');
         setHasMore(false);
       }
     } catch (error) {
       // Only show errors for non-aborted requests
       if (!(error instanceof DOMException && error.name === "AbortError")) {
-        console.error("Error loading more items:", error);
+        console.error("[InfiniteScroll] Error loading more items:", error);
         setError("Failed to load more items.");
         
         // Retry with exponential backoff
@@ -232,6 +251,37 @@ export function useInfiniteScroll<T extends { id: string }>({
       loadMore();
     }
   }, [loading, hasMore, loadMore]);
+
+  // Add prefetching for smoother transitions
+  useEffect(() => {
+    // Prefetch next page when we're close to the bottom
+    if (hasMore && !loading && !loadingRef.current && items.length >= 10) {
+      const prefetchNextPage = async () => {
+        try {
+          console.log(`[InfiniteScroll] Prefetching next page with after: ${afterValue}`);
+          // Only fetch the data, don't update state
+          await fetchItems(afterValue);
+        } catch (error) {
+          // Silently fail on prefetch errors
+          console.error("[InfiniteScroll] Prefetch error:", error);
+        }
+      };
+      
+      // Start prefetching after a delay (to avoid throttling)
+      const prefetchTimer = setTimeout(prefetchNextPage, 1000);
+      return () => clearTimeout(prefetchTimer);
+    }
+  }, [hasMore, loading, items.length, afterValue, fetchItems]);
+
+  // Create a debounced version of loadMore
+  const debouncedLoadMore = useCallback(
+    debounce(() => {
+      if (!loading && hasMore) {
+        loadMore();
+      }
+    }, 150), // 150ms debounce
+    [loading, hasMore, loadMore]
+  );
 
   return {
     items,

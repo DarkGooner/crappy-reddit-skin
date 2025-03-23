@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const after = searchParams.get("after") || ""
   // Get the NSFW preference from query parameters
   const showNSFW = searchParams.get("showNSFW") === "true"
-  const skipCache = searchParams.get("skipCache") === "true"
+  // skipCache parameter is no longer needed as we're always skipping cache
 
   try {
     const session = await getServerSession(authOptions)
@@ -61,13 +61,11 @@ export async function GET(request: Request) {
 
     console.log(`Fetching home feed with sort: ${effectiveSort}, timeFilter: ${timeFilter}, showNSFW: ${showNSFW}`);
 
-    // If skipCache is true, generate a unique URL with a timestamp to force cache miss
-    const cacheBustingEndpoint = skipCache 
-      ? `${endpoint}&_cb=${Date.now()}` 
-      : endpoint;
-
-    // Use the redditCache for API requests
-    const data = await redditCache.fetchWithCache<any>(cacheBustingEndpoint, { headers });
+    // Always add a timestamp to ensure a fresh request for each user
+    const freshEndpoint = `${endpoint}&_t=${Date.now()}`;
+    
+    // Use the redditCache for API requests (though caching is now disabled)
+    const data = await redditCache.fetchWithCache<any>(freshEndpoint, { headers });
 
     // Process posts
     if (!data || !data.data || !Array.isArray(data.data.children)) {

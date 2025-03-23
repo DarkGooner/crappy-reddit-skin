@@ -57,10 +57,22 @@ export default function PostFeed({
       _: Date.now().toString() // Prevent caching
     });
 
+    console.log(`[PostFeed] Fetching more posts with params:`, 
+      Object.fromEntries(queryParams.entries()),
+      `from endpoint: ${endpoint}`
+    );
+
     try {
       const response = await fetch(
         `${endpoint}?${queryParams.toString()}`,
-        { cache: 'no-store' }
+        { 
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          }
+        }
       );
 
       if (!response.ok) {
@@ -68,12 +80,32 @@ export default function PostFeed({
       }
 
       const data = await response.json();
+      
+      // Debug the response
+      console.log(`[PostFeed] Response received:`, {
+        postsCount: data.posts?.length || 0,
+        after: data.after || 'none',
+        before: data.before || 'none'
+      });
+      
+      // Ensure we have an array of posts and valid pagination
+      if (!data.posts || !Array.isArray(data.posts)) {
+        console.error("[PostFeed] Invalid posts data:", data);
+        return { items: [], after: null };
+      }
+      
+      // Check if any posts have the required 'name' field for pagination
+      const missingNames = data.posts.filter((post: Post) => !post.name).length;
+      if (missingNames > 0) {
+        console.warn(`[PostFeed] ${missingNames} posts are missing 'name' field needed for pagination`);
+      }
+      
       return { 
         items: data.posts || [], 
         after: data.after 
       };
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("[PostFeed] Error fetching posts:", error);
       throw error;
     }
   }, [endpoint, params, showNSFW]);

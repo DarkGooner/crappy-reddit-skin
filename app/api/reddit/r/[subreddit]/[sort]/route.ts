@@ -99,6 +99,7 @@ export async function GET(request: Request, context: { params: Promise<{ subredd
             gallery_data: postData.gallery_data,
             media_metadata: postData.media_metadata,
             crosspost_parent_list: postData.crosspost_parent_list,
+            name: postData.name,
           }
         })
     )

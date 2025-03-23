@@ -90,7 +90,7 @@ export function transformRedditResponse<T>(
 export async function createRedditApiRequest<T>(
   url: string, 
   options: RequestInit = {},
-  skipCache = false
+  skipCache = false // this parameter is now ignored as we always skip cache
 ): Promise<T> {
   try {
     // Get user session and access token - this is async and needs proper dynamic config
@@ -109,18 +109,11 @@ export async function createRedditApiRequest<T>(
       headers.set("Authorization", `Bearer ${session.accessToken}`);
     }
     
-    // Use cache unless skipCache is true
-    if (skipCache) {
-      // Force cache to be bypassed by adding a timestamp
-      const cacheBustUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
-      return await redditCache.fetchWithCache<T>(cacheBustUrl, { 
-        ...options, 
-        headers 
-      });
-    }
+    // Always add a timestamp to ensure fresh request
+    const freshUrl = `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
     
-    // Use the cache
-    return await redditCache.fetchWithCache<T>(url, { 
+    // Use the redditCache (which no longer caches but still handles rate limiting)
+    return await redditCache.fetchWithCache<T>(freshUrl, { 
       ...options, 
       headers 
     });

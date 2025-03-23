@@ -25,7 +25,7 @@ class RedditCache {
   private cache: Map<string, CacheEntry<any>>
   private rateLimitInfo: RateLimitInfo
   private appOnlyToken: AppOnlyToken | null = null
-  private readonly CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  private readonly CACHE_DURATION = 0 // Set to 0 to disable caching completely
   private readonly MIN_DELAY = 2000 // 2 seconds
   private readonly MAX_DELAY = 3000 // 3 seconds
   private readonly RATE_LIMIT = 100 // Reddit's rate limit per 10 minutes
@@ -105,10 +105,6 @@ class RedditCache {
     return isLimited
   }
 
-  private getCacheKey(url: string): string {
-    return url
-  }
-
   /**
    * Get an application-only OAuth token
    */
@@ -162,19 +158,10 @@ class RedditCache {
   }
 
   /**
-   * Fetch data with caching, rate limiting, and OAuth handling
+   * Fetch data with rate limiting and OAuth handling (no caching)
    */
   public async fetchWithCache<T>(url: string, options: RequestInit = {}): Promise<T> {
-    const cacheKey = this.getCacheKey(url)
-    const cachedEntry = this.cache.get(cacheKey)
-
-    // Check if we have a valid cached entry
-    if (cachedEntry && Date.now() - cachedEntry.timestamp < this.CACHE_DURATION) {
-      console.log(`[RedditCache] Cache hit for ${url.substring(0, 50)}...`)
-      return cachedEntry.data
-    }
-
-    console.log(`[RedditCache] Cache miss for ${url.substring(0, 50)}...`)
+    console.log(`[RedditCache] Fetching fresh data for ${url.substring(0, 50)}...`)
 
     // Check rate limits
     if (this.isRateLimited()) {
@@ -189,8 +176,6 @@ class RedditCache {
     try {
       // Check if we need app-only authentication
       const headers = new Headers(options.headers || {})
-      
-      // Handle URL appropriately based on auth status
       let adjustedUrl = url
       const hasAuthHeader = headers.has('Authorization')
       
@@ -268,12 +253,7 @@ class RedditCache {
 
       const data = await response.json()
       
-      // Cache the response
-      this.cache.set(cacheKey, {
-        data,
-        timestamp: Date.now()
-      })
-
+      // No longer caching the response
       return data
     } catch (error) {
       console.error('Error fetching data:', error)
@@ -283,7 +263,7 @@ class RedditCache {
 
   public clearCache(): void {
     this.cache.clear()
-    console.log('[RedditCache] Cache cleared')
+    console.log('[RedditCache] Cache cleared (though caching is disabled)')
   }
 
   public getRateLimitInfo(): RateLimitInfo {

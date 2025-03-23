@@ -6,20 +6,18 @@ import PostFeed from "@/components/post-feed"
 import Navbar from "@/components/navbar"
 import SelectionControls from "@/components/selection-controls"
 import { useToast } from "@/hooks/use-toast"
-import type { Subreddit } from "@/types/reddit"
+import type { Subreddit, Post } from "@/types/reddit"
 import { Flame, Clock, TrendingUp, Sparkles, Award, Loader2, RefreshCw, LogIn } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useNSFW } from "@/components/nsfw-context"
 import { useRouter } from "next/navigation"
-import { getMediaInfo } from "@/lib/media-utils"
-import { withCache } from "@/lib/cache-utils"
 import LoadingSpinner from "@/components/LoadingSpinner"
 import { Button } from "@/components/ui/button"
 import { signIn } from "next-auth/react"
 import ErrorWithNavbar from "@/components/error-with-navbar"
 
 export default function Home() {
-  const [posts, setPosts] = useState<any[]>([])
+  const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sortOption, setSortOption] = useState("best")
@@ -28,6 +26,7 @@ export default function Home() {
   const [loadingSubreddits, setLoadingSubreddits] = useState(false)
   const [isAuthError, setIsAuthError] = useState(false)
   const [isSigningIn, setIsSigningIn] = useState(false)
+  const [afterValue, setAfterValue] = useState<string | null>(null)
   const { toast } = useToast()
   const { data: session, status } = useSession()
   const { showNSFW } = useNSFW()
@@ -102,6 +101,9 @@ export default function Home() {
         setLoading(true);
         setError(null);
         setIsAuthError(false);
+        // Reset afterValue when sort or time filter changes
+        setAfterValue(null);
+        setPosts([]);
 
         // Use the API route that supports our file-based caching
         const url = `/api/reddit/posts?sort=${sortOption}&t=${timeFilter}&showNSFW=${showNSFW}`;
@@ -127,8 +129,9 @@ export default function Home() {
           throw new Error("Invalid data format received from API");
         }
         
-        console.log(`Loaded ${data.posts.length} posts`);
+        console.log(`Loaded ${data.posts.length} posts, pagination after: ${data.after || 'none'}`);
         setPosts(data.posts);
+        setAfterValue(data.after);
       } catch (err) {
         console.error("Error in fetchPosts:", err);
         setError(err instanceof Error ? err.message : "Failed to load posts");
@@ -175,6 +178,7 @@ export default function Home() {
       .then(res => res.json())
       .then(data => {
         setPosts(data.posts || []);
+        setAfterValue(data.after || null);
         setLoading(false);
       })
       .catch(err => {
@@ -193,7 +197,7 @@ export default function Home() {
         loadingSubreddits={loadingSubreddits}
       />
 
-      {loading && (
+      {loading && posts.length === 0 && !error && (
         <div className="flex-1 flex items-center justify-center">
           <LoadingSpinner size="large" />
         </div>
@@ -249,7 +253,7 @@ export default function Home() {
         )
       )}
 
-      {!loading && !error && (
+      {(posts.length > 0 || !error) && (
         <div className="flex-1 flex flex-col">
           <SelectionControls
             options={sortOptions}
@@ -264,10 +268,10 @@ export default function Home() {
                 <PostFeed
                   posts={{
                     posts: posts,
-                    after: posts.length > 0 ? String(posts[posts.length - 1].name) : null,
+                    after: afterValue,
                     before: null,
                   }}
-                  loading={false}
+                  loading={loading}
                   endpoint={`/api/reddit/posts`}
                   params={{ sort: sortOption, t: timeFilter }}
                   showNSFW={showNSFW}

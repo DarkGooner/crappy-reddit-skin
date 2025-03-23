@@ -4,6 +4,9 @@ import { authOptions } from "@/lib/auth"
 import type { Post } from "@/types/reddit"
 //import { withFileCache } from "@/lib/api-cache" //mine
 
+// Force dynamic rendering to ensure we don't cache data between users
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const type = searchParams.get("type") || "links" // links, comments, saved, hidden, upvoted, downvoted
@@ -32,27 +35,27 @@ export async function GET(request: Request) {
 
     console.log(`Fetching from endpoint: ${endpoint}`)
 
-    // Use file-based caching
-    const params = { type, limit, after, sort, timeFilter }
-    const data = await withFileCache(
-      `user-history-${session.user.name}-${type}`,
-      async () => {
-        const response = await fetch(endpoint, {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`,
-            "User-Agent": "RedditMobileWebUI/1.0.0",
-          },
-        })
-
-        if (!response.ok) {
-          console.error(`Reddit API error: ${response.status}`)
-          throw new Error(`Reddit API error: ${response.status}`)
-        }
-
-        return response.json()
+    // Add timestamp to ensure fresh data
+    const freshEndpoint = `${endpoint}&_t=${Date.now()}`
+    
+    // Make direct API request without caching
+    const response = await fetch(freshEndpoint, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        "User-Agent": "RedditMobileWebUI/1.0.0",
       },
-      params
-    )
+      cache: "no-store",
+    })
+
+    if (!response.ok) {
+      console.error(`Reddit API error: ${response.status}`)
+      throw new Error(`Reddit API error: ${response.status}`)
+    }
+
+    const data = await response.json()
+
+    // Debug pagination info
+    console.log(`Pagination info - After: ${data.data.after || 'null'}, Before: ${data.data.before || 'null'}, Count: ${data.data.children?.length || 0}`)
 
     const posts: Post[] = data.data.children
       .filter((child: any) => child.kind === "t3")
@@ -102,6 +105,14 @@ export async function GET(request: Request) {
           }
         }
 
+        // Ensure the name field is present for pagination
+        const name = post.name || `t3_${post.id}`;
+        
+        // Debug if name field is constructed rather than provided directly
+        if (!post.name) {
+          console.log(`Constructing name field for post ${post.id} as ${name}`);
+        }
+
         return {
           id: post.id,
           title: post.title,
@@ -127,9 +138,14 @@ export async function GET(request: Request) {
           link_flair_text: post.link_flair_text,
           link_flair_background_color: post.link_flair_background_color,
           link_flair_text_color: post.link_flair_text_color,
+          // Add the full name which is needed for pagination
+          name: name,
         }
       })
 
+    // Final debugging before returning response
+    console.log(`Returning ${posts.length} processed posts, with pagination after: ${data.data.after || 'null'}`);
+    
     return NextResponse.json({
       posts,
       after: data.data.after,
