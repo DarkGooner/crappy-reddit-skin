@@ -216,14 +216,30 @@ export default function PostCard({
 
           {/* Post text content */}
           {post.selftext && (
-            <div className="overflow-hidden max-w-full">
-              <FormattedContent
-                html={post.selftext_html}
-                markdown={post.selftext}
-                className="text-xs sm:text-sm mb-4 break-words overflow-wrap-anywhere text-balance"
-                lineClamp={showFullContent ? undefined : 3}
-                showHoverEffect={!showFullContent}
-              />
+            <div className="overflow-hidden max-w-full relative">
+              {/* Count words by splitting on whitespace and filter out empty strings */}
+              {(() => {
+                const wordCount = post.selftext.split(/\s+/).filter(word => word.length > 0).length;
+                const shouldTruncate = !showFullContent && wordCount > 200;
+                
+                return (
+                  <>
+                    <FormattedContent
+                      html={post.selftext_html}
+                      markdown={post.selftext}
+                      className="text-xs sm:text-sm mb-4 break-words overflow-wrap-anywhere text-balance max-h-[16rem] overflow-hidden"
+                      lineClamp={shouldTruncate ? 4 : undefined}
+                      showHoverEffect={shouldTruncate}
+                      showGradient={shouldTruncate}
+                    />
+                    {shouldTruncate && (
+                      <div className="absolute bottom-0 right-0 pr-2 pb-1 text-xs text-primary font-medium z-10">
+                        Read more
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </div>

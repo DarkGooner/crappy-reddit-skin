@@ -1,13 +1,14 @@
 "use client"
 
 import { useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { signIn } from "next-auth/react"
 import ErrorWithNavbar from "@/components/error-with-navbar"
 import { Button } from "@/components/ui/button"
 import { LogIn } from "lucide-react"
 
-export default function AuthErrorPage() {
+// Create a client component that uses useSearchParams
+function AuthErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
   const [isLoading, setIsLoading] = useState(false)
@@ -81,5 +82,14 @@ export default function AuthErrorPage() {
         </p>
       </div>
     </ErrorWithNavbar>
+  )
+}
+
+// Main page component with Suspense
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <AuthErrorContent />
+    </Suspense>
   )
 } 

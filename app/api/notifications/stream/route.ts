@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 
-export const runtime = "edge"
+export const runtime = "nodejs" //mine
 
 export async function GET() {
   const session = await getServerSession(authOptions)
