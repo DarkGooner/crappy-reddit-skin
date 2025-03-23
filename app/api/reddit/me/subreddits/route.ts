@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import type { Subreddit } from "@/types/reddit"
-import { withFileCache } from "@/lib/api-cache"
+//import { withFileCache } from "@/lib/api-cache" //mine
 import { redditCache } from "@/lib/reddit-cache"
 
 interface SubredditResponse {

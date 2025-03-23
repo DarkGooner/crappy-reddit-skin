@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import type { Post } from "@/types/reddit"
-import { withFileCache } from "@/lib/api-cache"
+//import { withFileCache } from "@/lib/api-cache" //mine
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
