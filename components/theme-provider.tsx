@@ -18,6 +18,7 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
         "protanopia",
         "deuteranopia",
         "tritanopia",
+        "amoled",
       ]}
       defaultTheme="dark"
       {...props}

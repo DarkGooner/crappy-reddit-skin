@@ -9,7 +9,7 @@ import PostCard from "@/components/post-card"
 import type { Post } from "@/types/reddit"
 import { useSession } from "next-auth/react"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, RefreshCw } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useInfiniteScroll } from "@/hooks/use-infinite-scroll"
 import InfinityScrollTrigger from "@/components/infinity-scroll-trigger"
@@ -35,10 +35,7 @@ export default function PostFeed({
   const initialPostsArray = Array.isArray(initialPosts) ? initialPosts : initialPosts.posts;
   const initialAfterValue = Array.isArray(initialPosts) ? null : initialPosts.after;
   
-  // States for pull-to-refresh functionality
-  const [touchStart, setTouchStart] = useState<number>(0);
-  const [pullDistance, setPullDistance] = useState<number>(0);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  // State for controlling how infinite scroll loads more content
   const [scrollMode, setScrollMode] = useState<'auto' | 'button' | 'hybrid'>('auto');
 
   const { data: session } = useSession();
@@ -126,45 +123,6 @@ export default function PostFeed({
     initialLoading: initialLoading,
     enabled: !!endpoint,
   });
-
-  // Pull to refresh handlers
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.touches[0].clientY);
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (refreshing) return;
-
-    const touchY = e.touches[0].clientY;
-    const distance = touchY - touchStart;
-
-    // Only allow pull down when at top of scroll
-    if (document.documentElement.scrollTop === 0 && distance > 0) {
-      setPullDistance(Math.min(distance * 0.5, 150));
-      e.preventDefault();
-    }
-  };
-
-  const handleTouchEnd = () => {
-    if (pullDistance > 100) {
-      handleRefresh();
-    }
-    setPullDistance(0);
-  };
-  
-  // Refresh the feed
-  const handleRefresh = async () => {
-    if (refreshing) return;
-    
-    setRefreshing(true);
-    
-    try {
-      await refresh();
-    } finally {
-      setRefreshing(false);
-      setPullDistance(0);
-    }
-  };
 
   // Vote handler
   const handleVote = async (postId: string, direction: number) => {
@@ -323,34 +281,7 @@ export default function PostFeed({
   }
 
   return (
-    <div
-      className="space-y-4"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      {/* Pull to refresh indicator */}
-      {pullDistance > 0 && (
-        <div
-          className="fixed top-0 left-0 right-0 flex items-center justify-center bg-background z-50 transition-transform"
-          style={{ height: `${pullDistance}px`, transform: `translateY(0)` }}
-        >
-          <RefreshCw
-            className={cn(
-              "h-6 w-6 text-primary transition-transform",
-              pullDistance > 100 ? "rotate-180" : `rotate-${Math.round((pullDistance / 100) * 180)}`
-            )}
-          />
-        </div>
-      )}
-
-      {/* Refreshing indicator */}
-      {refreshing && (
-        <div className="fixed top-0 left-0 right-0 h-1 bg-primary-foreground z-50">
-          <div className="h-full bg-primary animate-progress" />
-        </div>
-      )}
-
+    <div className="space-y-4">
       {/* Post list */}
       <div className="space-y-4">
         {posts.map((post) => (

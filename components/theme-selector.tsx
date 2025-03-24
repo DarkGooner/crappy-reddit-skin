@@ -28,6 +28,7 @@ const themes = [
   { id: "protanopia", name: "Protanopia", icon: Eye },
   { id: "deuteranopia", name: "Deuteranopia", icon: Eye },
   { id: "tritanopia", name: "Tritanopia", icon: Eye },
+  { id: "amoled", name: "AMOLED", icon: Moon },
 ]
 
 interface ThemeSelectorProps {
