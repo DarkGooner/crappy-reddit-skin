@@ -31,18 +31,13 @@ export interface MediaInfo {
   duration?: number
   isHLS?: boolean
   isDASH?: boolean
-  reddit_video?: {
-    dash_url: string
-    hls_url: string
-    duration: number
-    width: number
-    height: number
-  }
-  dashUrl?: string
   hlsUrl?: string
+  fallbackUrl?: string
   videoQualities?: Array<{
     quality: string
     url: string
+    width?: number
+    height?: number
   }>
   isCrosspost?: boolean
   crosspostInfo?: {
@@ -117,21 +112,6 @@ type MediaType =
  */
 export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
   if (!post) return null
-
-  // Enhanced logging for debugging
-  // console.log("getMediaInfo - Processing post:", { //mine
-  //   id: post.id,
-  //   title: post.title,
-  //   url: post.url,
-  //   is_gallery: post.is_gallery,
-  //   has_gallery_data: !!post.gallery_data,
-  //   has_media_metadata: !!post.media_metadata,
-  //   crosspost_parent: post.crosspost_parent,
-  //   has_crosspost_parent: !!post.crosspost_parent_list,
-  //   crosspost_parent_list_length: post.crosspost_parent_list?.length || 0,
-  //   domain: post.domain,
-  //   is_video: post.is_video,
-  // })
 
   // Handle crossposts by getting the original post data
   let originalPost = post
@@ -441,8 +421,6 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
       return null
     }
 
-    //console.log(`Successfully processed gallery with ${galleryItems.length} items`) //mine
-
     return {
       type: "gallery",
       url: originalPost.url,
@@ -460,8 +438,7 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
     }
   }
 
-  // IMPROVED V.REDD.IT VIDEO HANDLING
-  // Handle v.redd.it videos with better detection logic
+  // NEW SIMPLIFIED V.REDD.IT VIDEO HANDLING - PRIORITIZING HLS
   if (
     originalPost.domain === "v.redd.it" ||
     originalPost.url?.includes("v.redd.it") ||
@@ -470,195 +447,122 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
     originalPost.post_hint === "hosted:video"
   ) {
     try {
-      console.log("Processing v.redd.it video:", {
+      console.log("Processing v.redd.it video with HLS:", {
         is_video: originalPost.is_video,
         has_media: !!originalPost.media,
         has_reddit_video: !!originalPost.media?.reddit_video,
         url: originalPost.url,
-      })
+      });
 
-      // Get the video data from either the post or its crosspost parent
-      let video = originalPost.media?.reddit_video
-
-      // If we don't have reddit_video data but we have a v.redd.it URL, try to fetch it
-      if (!video && originalPost.url?.includes("v.redd.it")) {
-        // Extract the video ID from the URL
-        const vidId = originalPost.url.split("v.redd.it/")[1]?.split("?")[0]?.split("/")[0]
-
-        if (vidId) {
-          console.log("No reddit_video data found, fetching from API for video ID:", vidId)
-          try {
-            // Try to get the complete post data from the Reddit API
-            const response = await fetch(`https://www.reddit.com/comments/by_id/t3_${vidId}.json?raw_json=1`)
-            const data = await response.json()
-
-            if (data?.[0]?.data?.children?.[0]?.data) {
-              const completePost = data[0].data.children[0].data
-
-              // Update original post with the fetched data
-              if (completePost.media?.reddit_video) {
-                console.log("Found reddit_video data from API")
-                originalPost.media = completePost.media
-                video = completePost.media.reddit_video
-
-                // Also update other relevant fields
-                if (!originalPost.preview && completePost.preview) {
-                  originalPost.preview = completePost.preview
-                }
-
-                // Set is_video flag correctly
-                originalPost.is_video = true
-              }
-            }
-          } catch (fetchError) {
-            console.error("Error fetching video data from API:", fetchError)
-          }
+      // Extract the video ID from the URL or media data
+      let videoId = '';
+      
+      // First try to get video ID from media.reddit_video
+      if (originalPost.media?.reddit_video) {
+        // Extract ID from HLS URL if available
+        if (originalPost.media.reddit_video.hls_url) {
+          videoId = originalPost.media.reddit_video.hls_url.split('/')[3];
+        }
+        // Or extract ID from DASH URL if available
+        else if (originalPost.media.reddit_video.dash_url) {
+          videoId = originalPost.media.reddit_video.dash_url.split('/')[3];
+        }
+        // Or extract ID from fallback URL if available
+        else if (originalPost.media.reddit_video.fallback_url) {
+          videoId = originalPost.media.reddit_video.fallback_url.split('/')[3];
         }
       }
-
-      // If we still don't have the video data, try to generate fallback URLs based on the video ID
-      if (!video) {
-        console.log("No reddit_video data found, trying to create fallback video URLs")
-
-        // Get the video ID from the post URL
-        const videoId =
-          originalPost.url?.split("/").pop()?.split("?")[0] ||
-          originalPost.permalink?.split("/").pop()?.split("?")[0] ||
-          post.url?.split("/").pop()?.split("?")[0]
-
-        if (!videoId) {
-          console.error("Could not extract video ID")
-          return null
-        }
-
-        console.log("Using extracted Video ID:", videoId)
-
-        // Create a fallback video object with basic URLs
-        video = {
-          fallback_url: `https://v.redd.it/${videoId}/DASH_720.mp4`,
-          dash_url: `https://v.redd.it/${videoId}/DASHPlaylist.mpd`,
-          hls_url: `https://v.redd.it/${videoId}/HLSPlaylist.m3u8`,
-          width: 720,
-          height: 1280,
-          duration: 0,
-        }
+      
+      // If we still don't have a video ID, try to extract from URL
+      if (!videoId && originalPost.url) {
+        videoId = 
+          originalPost.url.split('v.redd.it/')[1]?.split('?')[0]?.split('/')[0] ||
+          originalPost.permalink?.split('/').pop()?.split('?')[0];
+      }
+      
+      // If we still don't have a video ID, try post.url as a last resort
+      if (!videoId && post.url) {
+        videoId = post.url.split('v.redd.it/')[1]?.split('?')[0]?.split('/')[0];
       }
 
-      // Get the video ID from the post URL or permalink or from the existing video data
-      let videoId =
-        originalPost.url?.split("/").pop()?.split("?")[0] ||
-        originalPost.permalink?.split("/").pop()?.split("?")[0] ||
-        post.url?.split("/").pop()?.split("?")[0] ||
-        video.fallback_url?.split("/")[3]
-
+      // If we couldn't extract a video ID, return null
       if (!videoId) {
-        console.error("Could not extract video ID")
-        return null
+        console.error("Could not extract v.redd.it video ID");
+        return null;
       }
 
-      console.log("Video ID:", videoId)
-
+      console.log("Video ID extracted:", videoId);
+      
       // If the video ID is a full Reddit post ID, extract just the video part
       if (videoId.includes("_")) {
-        videoId = videoId.split("_")[0]
+        videoId = videoId.split("_")[0];
       }
 
-      // Get the DASH manifest URL
-      const dashUrl = video.dash_url || `https://v.redd.it/${videoId}/DASHPlaylist.mpd`
-
-      // Get the HLS URL
-      const hlsUrl = video.hls_url || `https://v.redd.it/${videoId}/HLSPlaylist.m3u8`
-
-      // Get the audio URL if available
-      const audioUrl = video.hls_url
-        ? video.hls_url.replace("_v.m3u8", "_a.m3u8")
-        : `https://v.redd.it/${videoId}/DASH_audio.mp4`
-
-      // Get all available video qualities
-      const videoQualities = []
-      const qualities = ["1080", "720", "480", "360", "240", "96"]
-
-      // First try to get the video URL from the reddit_video object
-      if (video.fallback_url) {
-        videoQualities.push({
-          quality: "auto",
-          url: video.fallback_url,
-          width: video.width || 1280,
-          height: video.height || 720,
-        })
-      }
-
-      // Then try to get individual quality URLs
-      for (const quality of qualities) {
-        const url = `https://v.redd.it/${videoId}/DASH_${quality}.mp4`
-        try {
-          const response = await fetch(url, { method: "HEAD" })
-          if (response.ok) {
-            // Calculate dimensions based on quality
-            const baseWidth = video.width || 1920 // Use video width or default to 1080p
-            const baseHeight = video.height || 1080
-            const scale = Number.parseInt(quality) / 1080
-
-            videoQualities.push({
-              quality,
-              url,
-              width: Math.round(baseWidth * scale),
-              height: Math.round(baseHeight * scale),
-            })
-          }
-        } catch (error) {
-          // Skip unavailable qualities
+      // Generate the video URLs
+      
+      // 1. HLS URL (primary) - this is what we'll use with hls.js
+      let hlsUrl = originalPost.media?.reddit_video?.hls_url || 
+        `https://v.redd.it/${videoId}/HLSPlaylist.m3u8`;
+        
+      // Ensure the HLS URL is properly formatted
+      if (!hlsUrl.includes("HLSPlaylist.m3u8")) {
+        // Extract the video ID from the URL if it's not in the expected format
+        const extractedId = hlsUrl.split('/').pop()?.split('?')[0];
+        if (extractedId) {
+          hlsUrl = `https://v.redd.it/${extractedId}/HLSPlaylist.m3u8`;
         }
       }
-
+        
+      // 2. Fallback direct MP4 URL - used if HLS fails
+      const fallbackUrl = originalPost.media?.reddit_video?.fallback_url || 
+        `https://v.redd.it/${videoId}/DASH_720.mp4`;
+        
       // Get the poster image
-      let poster = null
+      let poster = null;
       if (originalPost.preview?.images?.[0]?.source?.url) {
-        poster = originalPost.preview.images[0].source.url.replace(/&amp;/g, "&")
+        poster = originalPost.preview.images[0].source.url.replace(/&amp;/g, "&");
       } else if (post.preview?.images?.[0]?.source?.url) {
-        poster = post.preview.images[0].source.url.replace(/&amp;/g, "&")
+        poster = post.preview.images[0].source.url.replace(/&amp;/g, "&");
       } else if (post.thumbnail && post.thumbnail !== "self" && post.thumbnail !== "default") {
-        poster = post.thumbnail
+        poster = post.thumbnail;
       }
 
-      // Calculate aspect ratio
-      const aspectRatio =
-        video.width && video.height
-          ? video.width / video.height
-          : originalPost.preview?.images?.[0]?.source?.width && originalPost.preview?.images?.[0]?.source?.height
-            ? originalPost.preview.images[0].source.width / originalPost.preview.images[0].source.height
-            : 16 / 9
+      // Get dimensions and calculate aspect ratio
+      const width = originalPost.media?.reddit_video?.width || originalPost.preview?.images?.[0]?.source?.width || 1280;
+      const height = originalPost.media?.reddit_video?.height || originalPost.preview?.images?.[0]?.source?.height || 720;
+      const aspectRatio = width && height ? width / height : 16 / 9;
+      
+      // Get duration
+      const duration = originalPost.media?.reddit_video?.duration || 0;
 
-      // console.log("Video processed successfully:", { //mine
-      //   has_dash: !!dashUrl,
-      //   has_hls: !!hlsUrl,
-      //   has_audio: !!audioUrl,
-      //   qualities: videoQualities.length,
-      //   first_quality_url: videoQualities[0]?.url,
-      // })
+      console.log("Video processed with HLS:", {
+        video_id: videoId,
+        hls_url: hlsUrl,
+        fallback_url: fallbackUrl,
+        width,
+        height,
+        has_poster: !!poster,
+        duration
+      });
 
       return {
         type: "vreddit",
-        url: videoQualities[0]?.url || video.fallback_url,
-        thumbnail: originalPost.thumbnail,
-        videoQualities,
-        width: video.width || originalPost.preview?.images?.[0]?.source?.width || 1280,
-        height: video.height || originalPost.preview?.images?.[0]?.source?.height || 720,
+        url: fallbackUrl, // For backwards compatibility
+        hlsUrl: hlsUrl,
+        fallbackUrl: fallbackUrl,
+        width,
+        height,
         poster,
+        thumbnail: originalPost.thumbnail,
         aspectRatio,
-        duration: video.duration,
-        isHLS: !!hlsUrl,
-        isDASH: !!dashUrl,
-        dashUrl,
-        hlsUrl,
-        audioUrl,
-        reddit_video: video,
+        duration,
+        isHLS: true,
         isCrosspost,
         crosspostInfo: isCrosspost ? getCrosspostInfo(originalPost) : undefined,
-      }
+      };
     } catch (error) {
-      console.error("Error processing v.redd.it video:", error)
-      return null
+      console.error("Error processing v.redd.it video:", error);
+      return null;
     }
   }
 
