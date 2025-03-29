@@ -35,6 +35,9 @@ export default function PostFeed({
   const initialPostsArray = Array.isArray(initialPosts) ? initialPosts : initialPosts.posts;
   const initialAfterValue = Array.isArray(initialPosts) ? null : initialPosts.after;
   
+  // Add refs for DOM elements
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  
   // State for controlling how infinite scroll loads more content
   const [scrollMode, setScrollMode] = useState<'auto' | 'button' | 'hybrid'>('auto');
 
@@ -115,7 +118,8 @@ export default function PostFeed({
     hasMore,
     refresh,
     loadMore,
-    triggerRef
+    triggerRef,
+    // No need to use mainTriggerRef and preloadTriggerRef from the hook
   } = useInfiniteScroll<Post>({
     items: initialPostsArray,
     fetchItems: fetchMorePosts,
@@ -281,12 +285,12 @@ export default function PostFeed({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" ref={wrapperRef}>
       {/* Post list */}
       <div className="space-y-4">
-        {posts.map((post) => (
+        {posts.map((post, idx) => (
           <PostCard
-            key={post.id}
+            key={`${post.id}-${idx}`}
             post={post}
             showFullContent={showFullContent}
             onVote={handleVote}
@@ -304,6 +308,28 @@ export default function PostFeed({
         mode={scrollMode}
         triggerRef={triggerRef}
       />
+      
+      {/* Manual load more button as fallback */}
+      {hasMore && !loading && (
+        <div className="mt-4 py-2 flex justify-center">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              console.log("[PostFeed] Manual load more clicked");
+              loadMore();
+            }}
+          >
+            Load More Posts
+          </Button>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex justify-center p-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
     </div>
   );
 }

@@ -18,6 +18,8 @@ export async function GET(request: Request) {
   const showNSFW = searchParams.get("showNSFW") === "true"
   // skipCache parameter is no longer needed as we're always skipping cache
 
+  console.log(`[API] Request params - sort: ${sort}, timeFilter: ${timeFilter}, limit: ${limit}, after: ${after ? after : 'none'}, showNSFW: ${showNSFW}`);
+
   try {
     const session = await getServerSession(authOptions)
 
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
       // User is authenticated, use OAuth endpoint
       baseUrl = "https://oauth.reddit.com";
       endpointPath = effectiveSort;
-      console.log("User is authenticated, using user auth token");
+      console.log("[API] User is authenticated, using user auth token");
     } else {
       // User is not authenticated, use public endpoint
       baseUrl = "https://www.reddit.com";
@@ -43,12 +45,12 @@ export async function GET(request: Request) {
       } else {
         endpointPath = effectiveSort;
       }
-      console.log("User is not authenticated, using public endpoint");
+      console.log("[API] User is not authenticated, using public endpoint");
     }
 
-    // Construct the full endpoint URL
+    // Construct the full endpoint URL with explicit after parameter
     const endpoint = `${baseUrl}/${endpointPath}.json?limit=${limit}&t=${timeFilter}${after ? `&after=${after}` : ""}`;
-    console.log(`Fetching home feed from: ${endpoint}`);
+    console.log(`[API] Fetching from: ${endpoint}`);
 
     const headers: HeadersInit = {
       "User-Agent": "RedditMobileWebUI/1.0.0",
@@ -59,7 +61,7 @@ export async function GET(request: Request) {
       headers["Authorization"] = `Bearer ${session.accessToken}`;
     }
 
-    console.log(`Fetching home feed with sort: ${effectiveSort}, timeFilter: ${timeFilter}, showNSFW: ${showNSFW}`);
+    console.log(`[API] Fetching home feed with sort: ${effectiveSort}, timeFilter: ${timeFilter}, showNSFW: ${showNSFW}`);
 
     // Always add a timestamp to ensure a fresh request for each user
     const freshEndpoint = `${endpoint}&_t=${Date.now()}`;
@@ -69,7 +71,7 @@ export async function GET(request: Request) {
 
     // Process posts
     if (!data || !data.data || !Array.isArray(data.data.children)) {
-      console.error("Invalid data structure returned from API:", data);
+      console.error("[API] Invalid data structure returned from API:", data);
       return NextResponse.json({ 
         error: "Invalid data received from Reddit API",
         posts: [],
@@ -77,6 +79,8 @@ export async function GET(request: Request) {
         before: null
       }, { status: 500 });
     }
+
+    console.log(`[API] Received ${data.data.children.length} posts, pagination: after=${data.data.after || 'none'}, before=${data.data.before || 'none'}`);
 
     // Transform posts with media info
     const posts: Post[] = await Promise.all(
@@ -132,6 +136,8 @@ export async function GET(request: Request) {
           }
         })
     )
+
+    console.log(`[API] Returning ${posts.length} filtered posts with after=${data.data.after || 'none'}`);
 
     return NextResponse.json({
       posts,

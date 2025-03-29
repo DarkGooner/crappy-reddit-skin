@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import PostFeed from "@/components/post-feed"
+import { PostFeedAdapter } from "@/components/post-feed-adapter"
 import Navbar from "@/components/navbar"
 import SelectionControls from "@/components/selection-controls"
 import { useToast } from "@/hooks/use-toast"
@@ -262,10 +262,17 @@ export default function Home() {
             onChange={handleSortChange}
             label="Sort"
           />
-          <ScrollArea className="h-[calc(100vh-8rem)]">
+          <div className="h-[calc(100vh-8rem)] overflow-auto">
             <div className="content-max-width">
               <div className="post-feed-container">
-                <PostFeed
+                {posts.length > 0 && (
+                  <div className="text-xs text-center text-muted-foreground mb-2">
+                    {posts.length} posts loaded | Scroll down for more
+                  </div>
+                )}
+                
+                <PostFeedAdapter
+                  key={`${sortOption}-${timeFilter}-${posts.length}`}
                   posts={{
                     posts: posts,
                     after: afterValue,
@@ -276,9 +283,17 @@ export default function Home() {
                   params={{ sort: sortOption, t: timeFilter }}
                   showNSFW={showNSFW}
                 />
+                
+                {process.env.NODE_ENV !== 'production' && (
+                  <div className="text-xs text-center text-muted-foreground mt-4 p-2 border border-dashed rounded">
+                    <div>Debug: afterValue = {afterValue || 'null'}</div>
+                    <div>Posts Count: {posts.length}</div>
+                    <div>Loading: {loading ? 'true' : 'false'}</div>
+                  </div>
+                )}
               </div>
             </div>
-          </ScrollArea>
+          </div>
         </div>
       )}
     </main>
