@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Trash, Plus, ExternalLink, Check, AlertCircle, Loader2 } from "lucide-react"
 import { toast } from "@/components/ui/use-toast"
+import { cn } from "@/lib/utils"
 
 // Add global styles for media embeds
 const embedStyles = `
@@ -48,12 +49,13 @@ export default function MediaHostsSettings() {
   const [testResults, setTestResults] = useState<{
     id: string | null;
     embedUrl: string | null;
+    testUrlUsed: string;
     success: boolean;
   } | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
-  const [previewMode, setPreviewMode] = useState<'direct' | 'iframe'>('direct')
+  const [previewMode, setPreviewMode] = useState<'direct' | 'iframe'>('iframe')
 
   // Reference to the preview container
   const previewRef = useRef<HTMLDivElement>(null)
@@ -113,6 +115,7 @@ export default function MediaHostsSettings() {
     setTestUrl("")
     setTestResults(null)
     setShowPreview(false)
+    setPreviewMode('iframe')
   }
 
   const handleAddHost = async () => {
@@ -204,22 +207,23 @@ export default function MediaHostsSettings() {
     setTestResults({
       id: extractedId,
       embedUrl,
+      testUrlUsed: testUrl,
       success: !!extractedId && !!embedUrl
     })
   }
 
   return (
     <div className="space-y-6">
-      <div className="bg-card rounded-lg p-6 border">
-        <div className="flex justify-between items-start mb-4">
+      <div className="bg-card rounded-lg p-4 sm:p-6 border">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
           <div>
             <h2 className="text-xl font-bold">Media Hosting Services</h2>
-            <p className="text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-1 text-sm">
               Add support for additional media hosting services to enhance your browsing experience.
             </p>
           </div>
           {!isAddingHost && (
-            <Button onClick={() => setIsAddingHost(true)} className="flex items-center gap-2">
+            <Button onClick={() => setIsAddingHost(true)} className="flex items-center gap-2 w-full sm:w-auto flex-shrink-0">
               <Plus className="h-4 w-4" />
               Add New Host
             </Button>
@@ -292,7 +296,7 @@ export default function MediaHostsSettings() {
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="testUrl">Test URL</Label>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Input
                           id="testUrl"
                           placeholder="Enter a URL to test"
@@ -308,75 +312,99 @@ export default function MediaHostsSettings() {
                       <Alert variant={testResults.success ? "default" : "destructive"}>
                         <div className="flex items-start">
                           {testResults.success ? (
-                            <Check className="h-4 w-4 mr-2 mt-0.5" />
+                            <Check className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                           ) : (
-                            <AlertCircle className="h-4 w-4 mr-2 mt-0.5" />
+                            <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                           )}
-                          <div>
+                          <div className="flex-1">
                             <AlertTitle>
                               {testResults.success ? "Pattern Test Successful" : "Pattern Test Failed"}
                             </AlertTitle>
-                            <AlertDescription className="mt-2 space-y-2">
+                            <AlertDescription className="mt-2 space-y-2 text-xs break-words">
+                              <div><strong>Tested URL:</strong> {testResults.testUrlUsed}</div>
                               {testResults.id ? (
-                                <div>
-                                  <strong>Extracted ID:</strong> {testResults.id}
+                                <div className="text-green-600 dark:text-green-400">
+                                  <strong>ID Extracted Successfully:</strong> {testResults.id}
                                 </div>
                               ) : (
-                                <div className="text-red-500">
-                                  Could not extract ID from the provided URL using your pattern.
+                                <div className="text-red-600 dark:text-red-400">
+                                  <strong>ID Extraction Failed:</strong> Could not extract ID using the URL pattern.
                                 </div>
                               )}
 
+                              {testResults.id && testResults.embedUrl && (
+                                <div className="text-green-600 dark:text-green-400">
+                                  <strong>Embed URL Generated Successfully.</strong>
+                                </div>
+                              )}
+                              {testResults.id && !testResults.embedUrl && (
+                                 <div className="text-red-600 dark:text-red-400">
+                                   <strong>Embed URL Generation Failed:</strong> Could not generate embed URL using the embed pattern.
+                                 </div>
+                              )}
+
                               {testResults.embedUrl && (
-                                <div className="space-y-4">
+                                <div className="space-y-4 mt-3">
                                   <div>
                                     <strong>Generated Embed URL:</strong>
                                     <pre className="mt-1 bg-muted p-2 rounded text-xs overflow-x-auto whitespace-pre-wrap break-all">
                                       {testResults.embedUrl}
                                     </pre>
                                   </div>
-                                  
+
                                   <div>
-                                    <div className="flex items-center justify-between mb-2">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
                                       <strong>Preview:</strong>
-                                      <div className="flex gap-2">
+                                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                                         <div className="flex items-center">
-                                          <Label htmlFor="previewMode" className="mr-2 text-xs">Mode:</Label>
+                                          <Label htmlFor="previewMode" className="mr-2 text-xs flex-shrink-0">Mode:</Label>
                                           <select
                                             id="previewMode"
                                             value={previewMode}
                                             onChange={(e) => setPreviewMode(e.target.value as 'direct' | 'iframe')}
                                             className="text-xs bg-background border rounded px-2 py-1 max-w-[100px] overflow-hidden text-ellipsis"
                                           >
-                                            <option value="direct">Direct</option>
-                                            <option value="iframe">Sandbox</option>
+                                            <option value="iframe">Sandbox (Safe)</option>
+                                            <option value="direct">Direct (Unsafe)</option>
                                           </select>
                                         </div>
-                                        <Button 
-                                          variant="outline" 
-                                          size="sm" 
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
                                           onClick={() => setShowPreview(!showPreview)}
+                                          className="text-xs"
                                         >
                                           {showPreview ? "Hide Preview" : "Show Preview"}
                                         </Button>
                                       </div>
                                     </div>
-                                    
+
+                                    {previewMode === 'direct' && showPreview && (
+                                      <Alert variant="default" className="mb-2 border-yellow-500/50 text-yellow-700 dark:text-yellow-300 [&>svg]:text-yellow-500">
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle>Security Warning</AlertTitle>
+                                        <AlertDescription className="text-xs">
+                                          Direct preview mode can execute scripts from the embed source and might pose a security risk. Use the Sandbox mode for better isolation.
+                                        </AlertDescription>
+                                      </Alert>
+                                    )}
+
                                     {showPreview && (
-                                      <div className="border rounded p-4 bg-white">
+                                      <div className="border rounded p-2 sm:p-4 bg-white dark:bg-gray-800">
                                         {previewMode === 'direct' ? (
-                                          <div 
+                                          <div
                                             ref={previewRef}
-                                            dangerouslySetInnerHTML={{ __html: testResults.embedUrl }} 
+                                            dangerouslySetInnerHTML={{ __html: testResults.embedUrl }}
                                             className="media-preview w-full overflow-hidden"
                                             style={{ maxWidth: '100%' }}
                                           />
                                         ) : (
                                           <iframe
-                                            srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;} img,video,iframe,embed,object{max-width:100%;height:auto;}</style></head><body>${testResults.embedUrl}</body></html>`}
-                                            sandbox="allow-scripts allow-same-origin allow-popups"
-                                            className="w-full min-h-[300px] max-h-[500px] overflow-auto"
-                                            title="Media Preview"
+                                            srcDoc={`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{margin:0;padding:0;overflow:hidden;} img,video,iframe,embed,object{max-width:100%;height:auto;display:block;margin:auto;}</style></head><body>${testResults.embedUrl}</body></html>`}
+                                            sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"
+                                            className="w-full min-h-[300px] max-h-[500px] border-0 overflow-auto"
+                                            title="Media Preview (Sandboxed)"
+                                            allowFullScreen
                                           ></iframe>
                                         )}
                                       </div>
@@ -393,22 +421,29 @@ export default function MediaHostsSettings() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <div>
-                {!showTester && (
-                  <Button variant="outline" onClick={() => setShowTester(true)}>
-                    Test Patterns
-                  </Button>
-                )}
+            <CardFooter className="flex flex-col sm:flex-row justify-between gap-2">
+              <div className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTester(!showTester)}
+                  className="w-full sm:w-auto"
+                >
+                  {showTester ? "Hide Tester" : "Test Patterns"}
+                </Button>
               </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => {
-                  setIsAddingHost(false)
-                  resetNewHost()
-                }}>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsAddingHost(false)
+                    resetNewHost()
+                  }}
+                  disabled={isSubmitting}
+                  className="flex-1 sm:flex-none"
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleAddHost} disabled={isSubmitting}>
+                <Button onClick={handleAddHost} disabled={isSubmitting} className="flex-1 sm:flex-none">
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -429,7 +464,7 @@ export default function MediaHostsSettings() {
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : hosts.length === 0 ? (
-            <div className="bg-muted/50 rounded-lg p-6 text-center">
+            <div className="bg-muted/50 rounded-lg p-6 text-center border">
               <p className="text-muted-foreground">
                 No custom media hosts added yet. Add a new host to support additional media services.
               </p>
@@ -437,12 +472,12 @@ export default function MediaHostsSettings() {
           ) : (
             <div className="grid gap-4">
               {hosts.map((host) => (
-                <div key={host.id} className="bg-muted/30 rounded-lg p-4 border">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{host.name}</h3>
-                        <Badge variant="outline" className="ml-2">
+                <div key={host.id} className="bg-card rounded-lg p-4 border">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold break-words">{host.name}</h3>
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
                           Custom Host
                         </Badge>
                       </div>
@@ -466,27 +501,27 @@ export default function MediaHostsSettings() {
                     </Button>
                   </div>
                   <div className="mt-3 space-y-2">
-                    <div className="text-sm">
+                    <div className="text-sm break-words">
                       <span className="font-medium">URL Pattern:</span>{" "}
-                      <code className="bg-muted rounded px-1 py-0.5">{host.urlPattern}</code>
+                      <code className="bg-muted rounded px-1 py-0.5 text-xs whitespace-pre-wrap break-all">{host.urlPattern}</code>
                     </div>
-                    <div className="text-sm">
+                    <div className="text-sm break-words">
                       <span className="font-medium">Embed Pattern:</span>{" "}
-                      <code className="bg-muted rounded px-1 py-0.5">{host.embedUrlPattern}</code>
+                      <code className="bg-muted rounded px-1 py-0.5 text-xs whitespace-pre-wrap break-all">{host.embedUrlPattern}</code>
                     </div>
                     {host.sampleUrl && (
-                      <div className="text-sm flex items-center gap-1">
+                      <div className="text-sm flex items-center gap-1 break-words">
                         <span className="font-medium">Sample:</span>{" "}
                         <a 
                           href={host.sampleUrl} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
+                          className="text-blue-500 hover:text-blue-600 flex items-center gap-1 break-all"
                         >
-                          {host.sampleUrl.length > 40 
-                            ? host.sampleUrl.substring(0, 40) + "..." 
+                          {host.sampleUrl.length > 60
+                            ? host.sampleUrl.substring(0, 60) + "..."
                             : host.sampleUrl}
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3 w-3 flex-shrink-0" />
                         </a>
                       </div>
                     )}
