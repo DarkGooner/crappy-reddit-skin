@@ -1311,20 +1311,25 @@ export default function MediaRenderer({
       // Other cases (redgif, gfycat, etc.)
       // ... (redgif, gfycat, streamable, youtube, twitch cases remain exactly as provided) ...
       case "redgif":
+        const redgifAspectRatio = media.aspectRatio || 16/9; // Default to 16:9 if aspectRatio is missing
+        const paddingTop = `${(1 / redgifAspectRatio) * 100}%`; // Calculate padding based on aspect ratio
+        
         return (
           <div
             className={cn("redgif-embed-container", !isDialog && className)}
             style={{
-              maxWidth: width,
-              // Use a 9:16 aspect ratio by default, which is common for mobile content
-              // The paddingBottom is already defined in the CSS class
+              maxWidth: media.width || width,
+              paddingTop, // Override the default padding with calculated value
             }}
           >
             <iframe
               src={media.url}
               frameBorder="0"
+              scrolling="no"
               allowFullScreen
+              sandbox="allow-same-origin allow-scripts allow-popups allow-presentation"
               onLoad={handleImageLoad}
+              title="RedGIFs Content"
             />
           </div>
         )
