@@ -530,10 +530,10 @@
 .redgif-embed-container {
   position: relative;
   width: 100%;
-  /* Use 9:16 aspect ratio by default, which is common for mobile-oriented content */
-  padding-bottom: 177.78%;
   overflow: hidden;
-  border-radius: 0.5rem;
+  padding-top: 56.25%; /* Default 16:9 aspect ratio, which will be overridden by inline styles */
+  background-color: #000;
+  border-radius: 0.375rem; /* Rounded corners */
 }
 
 .redgif-embed-container iframe {
@@ -545,10 +545,11 @@
   border: 0;
 }
 
-/* Handle landscape redgifs differently if needed */
-@media (min-width: 768px) {
-  .redgif-embed-container.landscape {
-    padding-bottom: 56.25%; /* 16:9 for landscape content */
+/* Specific exception for RedGif containers to maintain aspect ratio */
+@media (max-width: 600px) {
+  .redgif-embed-container {
+    width: 100%;
+    max-width: 100%;
   }
 }
 

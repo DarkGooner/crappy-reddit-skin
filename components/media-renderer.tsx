@@ -1067,6 +1067,35 @@ export default function MediaRenderer({
       )
     }
 
+    // For Redgifs content
+    if (item.type === "redgif") {
+      return (
+        <div className="redgif-container relative" style={{ width: '100%', aspectRatio: item.aspectRatio || '16/9' }}>
+          <iframe
+            src={item.url}
+            frameBorder="0"
+            scrolling="no"
+            allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            className="w-full h-full"
+            style={{ pointerEvents: 'auto' }}
+          ></iframe>
+          
+          {/* Add an invisible overlay to catch clicks if needed */}
+          <div 
+            className="absolute inset-0 z-10" 
+            style={{ pointerEvents: 'none' }}
+            onClick={(e) => {
+              // Allow clicks for controls but prevent navigation
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }}
+          ></div>
+        </div>
+      );
+    }
+
     // Fallback
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -1311,20 +1340,25 @@ export default function MediaRenderer({
       // Other cases (redgif, gfycat, etc.)
       // ... (redgif, gfycat, streamable, youtube, twitch cases remain exactly as provided) ...
       case "redgif":
+        const redgifAspectRatio = media.aspectRatio || 16/9; // Default to 16:9 if aspectRatio is missing
+        const paddingTop = `${(1 / redgifAspectRatio) * 100}%`; // Calculate padding based on aspect ratio
+        
         return (
           <div
             className={cn("redgif-embed-container", !isDialog && className)}
             style={{
-              maxWidth: width,
-              // Use a 9:16 aspect ratio by default, which is common for mobile content
-              // The paddingBottom is already defined in the CSS class
+              maxWidth: media.width || width,
+              paddingTop, // Override the default padding with calculated value
             }}
           >
             <iframe
               src={media.url}
               frameBorder="0"
+              scrolling="no"
               allowFullScreen
+              sandbox="allow-scripts allow-same-origin allow-presentation"
               onLoad={handleImageLoad}
+              title="RedGIFs Content"
             />
           </div>
         )

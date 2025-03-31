@@ -61,6 +61,19 @@ export interface MediaInfo {
     caption?: string
     outboundUrl?: string
   }
+  redgifDetails?: {
+    id: string
+    duration?: number
+    hasAudio?: boolean
+    urls?: {
+      sd?: string
+      hd?: string
+      poster?: string
+      thumbnail?: string
+      [key: string]: string | undefined
+    }
+    tags?: string[]
+  }
 }
 
 interface GalleryItem {
@@ -585,17 +598,22 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
   // Handle Redgifs
   if (originalPost.domain === "redgifs.com" || 
       originalPost.domain === "i.redgifs.com" || 
+      // Add support for v3.redgifs.com and any other subdomains
+      originalPost.domain?.endsWith('.redgifs.com') ||
       (isCrosspost && (originalPost.url?.includes("redgifs.com") || originalPost.url?.includes("i.redgifs.com")))) {
     
     let id = "";
     
     // Extract ID based on URL pattern
-    if (originalPost.url.includes("/i/")) {
+    if (originalPost.url.includes("/watch/")) {
+      // Handle pattern: {subdomain}.redgifs.com/watch/{id}
+      id = originalPost.url.split("/watch/")[1]?.split(/[?#]/)[0];
+    } else if (originalPost.url.includes("/i/")) {
       // Handle i.redgifs.com/i/{id}.ext format - extract ID without file extension
-      id = originalPost.url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; // Split at last dot to remove extension
+      id = originalPost.url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; 
     } else {
       // Standard redgifs.com format
-      id = originalPost.url.split("/").pop()?.split("?")[0];
+      id = originalPost.url.split("/").pop()?.split(/[?#]/)[0];
     }
     
     if (!id) {
@@ -603,23 +621,65 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
       return null;
     }
     
-    // Calculate aspect ratio if we have width and height information
-    let aspectRatio;
-    if (originalPost.preview?.images[0]?.source?.width && originalPost.preview?.images[0]?.source?.height) {
-      const width = originalPost.preview.images[0].source.width;
-      const height = originalPost.preview.images[0].source.height;
-      aspectRatio = width / height;
-    }
-    
-    return {
-      type: "redgif",
-      url: `https://www.redgifs.com/ifr/${id}`,
-      width: originalPost.preview?.images[0]?.source?.width,
-      height: originalPost.preview?.images[0]?.source?.height,
-      aspectRatio: aspectRatio,
-      poster: originalPost.preview?.images[0]?.source?.url?.replace(/&amp;/g, "&"),
-      isCrosspost,
-      crosspostInfo: isCrosspost ? getCrosspostInfo(originalPost) : undefined,
+    try {
+      // Fetch optimal dimensions and other details from our API endpoint
+      const response = await fetch(`/api/redgifs?id=${id}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch RedGIFs data: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      const gif = data.gif;
+      
+      if (!gif) {
+        throw new Error('Invalid RedGIFs API response');
+      }
+      
+      // Get the HD URL if available, or fall back to SD
+      const width = gif.width || originalPost.preview?.images[0]?.source?.width;
+      const height = gif.height || originalPost.preview?.images[0]?.source?.height;
+      const aspectRatio = width && height ? width / height : undefined;
+      
+      return {
+        type: "redgif",
+        url: `https://www.redgifs.com/ifr/${id}`,
+        width: width,
+        height: height,
+        aspectRatio: aspectRatio,
+        poster: gif.urls?.poster || originalPost.preview?.images[0]?.source?.url?.replace(/&amp;/g, "&"),
+        thumbnail: gif.urls?.thumbnail,
+        isCrosspost,
+        crosspostInfo: isCrosspost ? getCrosspostInfo(originalPost) : undefined,
+        redgifDetails: {
+          id: id,
+          duration: gif.duration,
+          hasAudio: gif.hasAudio,
+          urls: gif.urls,
+          tags: gif.tags
+        }
+      };
+    } catch (error) {
+      console.error("Error fetching RedGIFs media details:", error);
+      
+      // Fall back to the basic embedding if API fails
+      let aspectRatio;
+      if (originalPost.preview?.images[0]?.source?.width && originalPost.preview?.images[0]?.source?.height) {
+        const width = originalPost.preview.images[0].source.width;
+        const height = originalPost.preview.images[0].source.height;
+        aspectRatio = width / height;
+      }
+      
+      return {
+        type: "redgif",
+        url: `https://www.redgifs.com/ifr/${id}`,
+        width: originalPost.preview?.images[0]?.source?.width,
+        height: originalPost.preview?.images[0]?.source?.height,
+        aspectRatio: aspectRatio,
+        poster: originalPost.preview?.images[0]?.source?.url?.replace(/&amp;/g, "&"),
+        isCrosspost,
+        crosspostInfo: isCrosspost ? getCrosspostInfo(originalPost) : undefined,
+      }
     }
   }
 
@@ -944,14 +1004,23 @@ export function getEmbedUrl(url: string): string {
   // Redgifs
   if (url.includes("redgifs.com")) {
     let videoId;
-    if (url.includes("/i/")) {
+    
+    if (url.includes("/watch/")) {
+      // Handle subdomain.redgifs.com/watch/{id} format
+      videoId = url.match(/redgifs\.com\/watch\/([^/?#]+)/)?.[1];
+    } else if (url.includes("/i/")) {
       // Handle i.redgifs.com/i/{id}.ext format - extract ID without file extension
-      videoId = url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; // Split at last dot to remove extension
+      videoId = url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; 
     } else {
       // Standard redgifs.com format
-      videoId = url.match(/redgifs\.com\/(?:i\/|watch\/)?([^/?]+)/)?.[1];
+      videoId = url.match(/redgifs\.com\/(?:i\/|watch\/)?([^/?#]+)/)?.[1];
     }
-    return videoId ? `https://www.redgifs.com/ifr/${videoId}` : url
+    
+    // Use an optimized iframe with proper sandbox attributes
+    if (videoId) {
+      return `https://www.redgifs.com/ifr/${videoId}`;
+    }
+    return url;
   }
 
   return url
