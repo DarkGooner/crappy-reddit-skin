@@ -598,17 +598,22 @@ export async function getMediaInfo(post: any): Promise<MediaInfo | null> {
   // Handle Redgifs
   if (originalPost.domain === "redgifs.com" || 
       originalPost.domain === "i.redgifs.com" || 
+      // Add support for v3.redgifs.com and any other subdomains
+      originalPost.domain?.endsWith('.redgifs.com') ||
       (isCrosspost && (originalPost.url?.includes("redgifs.com") || originalPost.url?.includes("i.redgifs.com")))) {
     
     let id = "";
     
     // Extract ID based on URL pattern
-    if (originalPost.url.includes("/i/")) {
+    if (originalPost.url.includes("/watch/")) {
+      // Handle pattern: {subdomain}.redgifs.com/watch/{id}
+      id = originalPost.url.split("/watch/")[1]?.split(/[?#]/)[0];
+    } else if (originalPost.url.includes("/i/")) {
       // Handle i.redgifs.com/i/{id}.ext format - extract ID without file extension
-      id = originalPost.url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; // Split at last dot to remove extension
+      id = originalPost.url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; 
     } else {
       // Standard redgifs.com format
-      id = originalPost.url.split("/").pop()?.split("?")[0];
+      id = originalPost.url.split("/").pop()?.split(/[?#]/)[0];
     }
     
     if (!id) {
@@ -999,13 +1004,18 @@ export function getEmbedUrl(url: string): string {
   // Redgifs
   if (url.includes("redgifs.com")) {
     let videoId;
-    if (url.includes("/i/")) {
+    
+    if (url.includes("/watch/")) {
+      // Handle subdomain.redgifs.com/watch/{id} format
+      videoId = url.match(/redgifs\.com\/watch\/([^/?#]+)/)?.[1];
+    } else if (url.includes("/i/")) {
       // Handle i.redgifs.com/i/{id}.ext format - extract ID without file extension
-      videoId = url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; // Split at last dot to remove extension
+      videoId = url.split("/i/")[1]?.split(/\.[^/.]+$/)[0]; 
     } else {
       // Standard redgifs.com format
-      videoId = url.match(/redgifs\.com\/(?:i\/|watch\/)?([^/?]+)/)?.[1];
+      videoId = url.match(/redgifs\.com\/(?:i\/|watch\/)?([^/?#]+)/)?.[1];
     }
+    
     // Use an optimized iframe with proper sandbox attributes
     if (videoId) {
       return `https://www.redgifs.com/ifr/${videoId}`;

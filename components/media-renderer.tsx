@@ -1067,6 +1067,35 @@ export default function MediaRenderer({
       )
     }
 
+    // For Redgifs content
+    if (item.type === "redgif") {
+      return (
+        <div className="redgif-container relative" style={{ width: '100%', aspectRatio: item.aspectRatio || '16/9' }}>
+          <iframe
+            src={item.url}
+            frameBorder="0"
+            scrolling="no"
+            allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-presentation"
+            className="w-full h-full"
+            style={{ pointerEvents: 'auto' }}
+          ></iframe>
+          
+          {/* Add an invisible overlay to catch clicks if needed */}
+          <div 
+            className="absolute inset-0 z-10" 
+            style={{ pointerEvents: 'none' }}
+            onClick={(e) => {
+              // Allow clicks for controls but prevent navigation
+              e.preventDefault();
+              e.stopPropagation();
+              return false;
+            }}
+          ></div>
+        </div>
+      );
+    }
+
     // Fallback
     return (
       <div className="w-full h-full flex items-center justify-center">
@@ -1327,7 +1356,7 @@ export default function MediaRenderer({
               frameBorder="0"
               scrolling="no"
               allowFullScreen
-              sandbox="allow-same-origin allow-scripts allow-popups allow-presentation"
+              sandbox="allow-scripts allow-same-origin allow-presentation"
               onLoad={handleImageLoad}
               title="RedGIFs Content"
             />

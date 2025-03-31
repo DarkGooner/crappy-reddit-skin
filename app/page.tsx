@@ -265,11 +265,11 @@ export default function Home() {
           <div className="h-[calc(100vh-8rem)] overflow-auto">
             <div className="content-max-width">
               <div className="post-feed-container">
-                {posts.length > 0 && (
+                {/* {posts.length > 0 && (
                   <div className="text-xs text-center text-muted-foreground mb-2">
                     {posts.length} posts loaded | Scroll down for more
                   </div>
-                )}
+                )} */}
                 
                 <PostFeedAdapter
                   key={`${sortOption}-${timeFilter}-${posts.length}`}
